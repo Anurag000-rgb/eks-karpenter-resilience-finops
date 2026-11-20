@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stress-control
+  namespace: ca2-dev
+data:
+  until: "0"
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dev-service
+  namespace: ca2-dev
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dev-service
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: ContainerResource
+      containerResource:
+        name: cpu
+        container: stress
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stress-control
+  namespace: ca2-prod
+data:
+  until: "0"
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: checkout
+  namespace: ca2-prod
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: checkout
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: ContainerResource
+      containerResource:
+        name: cpu
+        container: stress
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60

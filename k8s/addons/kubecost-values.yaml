@@ -1,0 +1,59 @@
+# Short-lived, single-cluster lab. Export evidence before restarting these pods.
+# Registry and retention follow the chart's values-eks-cost-monitoring.yaml.
+global:
+  clusterId: ca2-resilience
+  imageRegistry: public.ecr.aws
+frontend:
+  nodeSelector:
+    karpenter.sh/nodepool: lab-addons
+  tolerations: &addonsTolerations
+    - key: ca2-workload
+      operator: Equal
+      value: addons
+      effect: NoSchedule
+  service:
+    type: ClusterIP
+aggregator:
+  retention1d: 16
+  useEmptyDir: true
+  emptyDirDbStorageSizeLimit: 32Gi
+  nodeSelector:
+    karpenter.sh/nodepool: lab-addons
+  tolerations: *addonsTolerations
+  resources:
+    requests:
+      cpu: 100m
+      memory: 3Gi
+      ephemeral-storage: 4Gi
+    limits:
+      memory: 6Gi
+localStore:
+  persistentVolume:
+    enabled: false
+  nodeSelector:
+    karpenter.sh/nodepool: lab-addons
+  tolerations: *addonsTolerations
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+      ephemeral-storage: 2Gi
+    limits:
+      memory: 2Gi
+finopsagent:
+  nodeSelector:
+    karpenter.sh/nodepool: lab-addons
+  tolerations: *addonsTolerations
+  persistence:
+    enabled: false
+# Keep the lab focused on cost allocation and avoid extra controllers.
+networkCosts:
+  enabled: false
+clusterController:
+  enabled: false
+forecasting:
+  enabled: false
+mcp:
+  enabled: false
+cloudCost:
+  enabled: false

@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ca2-prod
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout
+  namespace: ca2-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: checkout
+  template:
+    metadata:
+      labels:
+        app: checkout
+    spec:
+      nodeSelector:
+        karpenter.sh/nodepool: prod-on-demand
+      tolerations:
+        - key: ca2-workload
+          operator: Equal
+          value: prod
+          effect: NoSchedule
+      topologySpreadConstraints:
+        - maxSkew: 1
+          minDomains: 2
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          nodeTaintsPolicy: Honor
+          labelSelector:
+            matchLabels:
+              app: checkout
+      containers:
+        - name: nginx
+          image: nginx:1.28-alpine
+          ports:
+            - name: http
+              containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 2
+          resources:
+            requests:
+              cpu: 250m
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkout
+  namespace: ca2-prod
+spec:
+  selector:
+    app: checkout
+  ports:
+    - port: 80
+      targetPort: http
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: checkout
+  namespace: ca2-prod
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: checkout

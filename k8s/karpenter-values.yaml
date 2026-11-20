@@ -1,0 +1,14 @@
+replicas: 1
+serviceAccount:
+  name: karpenter
+  annotations:
+    eks.amazonaws.com/sts-regional-endpoints: "true"
+nodeSelector:
+  karpenter.sh/controller: "true"
+controller:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      memory: 1Gi

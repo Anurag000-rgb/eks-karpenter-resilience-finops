@@ -1,0 +1,104 @@
+{
+  "uid": "ca2-resilience",
+  "title": "CA2 Cost and Resilience",
+  "schemaVersion": 41,
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "refresh": "5s",
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Ready workload pods",
+      "description": "Pods that report ready, grouped by environment.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "ca2-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (namespace) (karpenter_pods_state{namespace=~\"ca2-prod|ca2-dev\",ready=\"true\"})",
+          "legendFormat": "{{namespace}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "NodeClaims created",
+      "description": "Cumulative count since the controller started.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "ca2-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (nodepool) (karpenter_nodeclaims_created_total)",
+          "legendFormat": "{{nodepool}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "NodeClaim disruptions",
+      "description": "Cumulative disruption counts reported by Karpenter.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "ca2-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (nodepool, reason) (karpenter_nodeclaims_disrupted_total)",
+          "legendFormat": "{{nodepool}} / {{reason}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Estimated EC2 rate per node (USD/h)",
+      "description": "Karpenter price estimates for the configured instance type and capacity offerings. Use AWS rate history and measured node runtime for the experiment cost.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "ca2-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "karpenter_cloudprovider_instance_type_offering_price_estimate{instance_type=\"m5.large\",capacity_type=\"on-demand\",zone=~\"us-east-1a|us-east-1b\"} or karpenter_cloudprovider_instance_type_offering_price_estimate{instance_type=\"m5.large\",capacity_type=\"spot\",zone=\"us-east-1a\"}",
+          "legendFormat": "{{capacity_type}} / {{zone}}"
+        }
+      ]
+    }
+  ]
+}

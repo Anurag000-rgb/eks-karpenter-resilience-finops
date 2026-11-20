@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ca2-dev
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dev-service
+  namespace: ca2-dev
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dev-service
+  template:
+    metadata:
+      labels:
+        app: dev-service
+    spec:
+      nodeSelector:
+        karpenter.sh/nodepool: dev-spot
+      tolerations:
+        - key: ca2-workload
+          operator: Equal
+          value: dev
+          effect: NoSchedule
+      containers:
+        - name: nginx
+          image: nginx:1.28-alpine
+          ports:
+            - name: http
+              containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 2
+          resources:
+            requests:
+              cpu: 250m
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dev-service
+  namespace: ca2-dev
+spec:
+  selector:
+    app: dev-service
+  ports:
+    - port: 80
+      targetPort: http

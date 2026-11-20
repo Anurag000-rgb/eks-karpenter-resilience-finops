@@ -1,0 +1,58 @@
+timezone: UTC
+enableProfiling: false
+controllerManager:
+  replicaCount: 1
+  enableFilterNamespace: true
+  nodeSelector:
+    karpenter.sh/nodepool: lab-addons
+  tolerations: &addonsTolerations
+    - key: ca2-workload
+      operator: Equal
+      value: addons
+      effect: NoSchedule
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+chaosDaemon:
+  runtime: containerd
+  socketPath: /run/containerd/containerd.sock
+  # Fault injection requires a privileged daemon on the workload workers.
+  tolerations:
+    - key: ca2-workload
+      operator: Equal
+      value: prod
+      effect: NoSchedule
+    - key: ca2-workload
+      operator: Equal
+      value: dev
+      effect: NoSchedule
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: karpenter.sh/nodepool
+                operator: In
+                values: [prod-on-demand, dev-spot]
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+dashboard:
+  securityMode: true
+  nodeSelector:
+    karpenter.sh/nodepool: lab-addons
+  tolerations: *addonsTolerations
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+dnsServer:
+  create: false

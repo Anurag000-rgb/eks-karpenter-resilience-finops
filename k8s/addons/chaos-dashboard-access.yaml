@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ca2-chaos-operator
+  namespace: chaos-mesh
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ca2-chaos-namespace-reader
+rules:
+  - apiGroups: [""]
+    resources: [namespaces]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ca2-chaos-namespace-reader
+subjects:
+  - kind: ServiceAccount
+    name: ca2-chaos-operator
+    namespace: chaos-mesh
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ca2-chaos-namespace-reader
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ca2-chaos-operator
+  namespace: ca2-dev
+rules:
+  # The dashboard lists all experiment types in the selected namespace.
+  - apiGroups: [chaos-mesh.org]
+    resources: ["*"]
+    verbs: [get, list, watch]
+  - apiGroups: [chaos-mesh.org]
+    resources: [podchaos]
+    verbs: [create, update, patch, delete]
+  - apiGroups: [""]
+    resources: [pods, events, services]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments, replicasets]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ca2-chaos-operator
+  namespace: ca2-dev
+subjects:
+  - kind: ServiceAccount
+    name: ca2-chaos-operator
+    namespace: chaos-mesh
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ca2-chaos-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ca2-chaos-operator
+  namespace: ca2-prod
+rules:
+  - apiGroups: [chaos-mesh.org]
+    resources: ["*"]
+    verbs: [get, list, watch]
+  - apiGroups: [chaos-mesh.org]
+    resources: [podchaos]
+    verbs: [create, update, patch, delete]
+  - apiGroups: [""]
+    resources: [pods, events, services]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments, replicasets]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ca2-chaos-operator
+  namespace: ca2-prod
+subjects:
+  - kind: ServiceAccount
+    name: ca2-chaos-operator
+    namespace: chaos-mesh
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ca2-chaos-operator

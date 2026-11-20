@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CA2 scaling panel</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #edf2f8; color: #17283d; font: 1rem system-ui, sans-serif; }
+    main { width: min(38rem, calc(100% - 2rem)); margin: 8vh auto; padding: 1.75rem;
+      background: white; border: 1px solid #d4dde9; border-radius: 1rem; }
+    h1 { margin-top: 0; }
+    label, dt { font-weight: 650; }
+    select, button { font: inherit; padding: .65rem .9rem; border: 1px solid #64748b;
+      border-radius: .45rem; }
+    select { display: block; width: 100%; margin: .4rem 0 1rem; background: white; }
+    button { cursor: pointer; background: #fff; color: #17283d; margin: 0 .4rem .4rem 0; }
+    button[value="up"] { background: #1456b8; border-color: #1456b8; color: white; }
+    button:disabled { opacity: .55; cursor: wait; }
+    dl { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem 1rem; padding: 1rem;
+      background: #f0f5fc; border-radius: .5rem; }
+    dd { margin: 0; }
+    #message { min-height: 1.5rem; color: #a02b22; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>CA2 scaling panel</h1>
+    <p>Start a ten-minute CPU stress test and watch Kubernetes adjust the deployment.</p>
+    <label for="profile">Workload</label>
+    <select id="profile">
+      <option value="dev">Development · dev-service (Spot)</option>
+      <option value="prod">Production lab · checkout (On-Demand)</option>
+    </select>
+    <button type="button" value="up">Scale up</button>
+    <button type="button" value="down">Scale down</button>
+    <dl>
+      <dt>Stress requested</dt><dd id="stress">—</dd>
+      <dt>Ready / desired pods</dt><dd id="replicas">—</dd>
+      <dt>Stress CPU / request</dt><dd id="cpu">—</dd>
+    </dl>
+    <p>Scale down stops the stress test. ConfigMap updates and autoscaling take time to reach the pods.</p>
+    <p id="message" role="status"></p>
+  </main>
+  <script>
+    const profile = document.querySelector('#profile');
+    const message = document.querySelector('#message');
+    const stress = document.querySelector('#stress');
+    const replicas = document.querySelector('#replicas');
+    const cpu = document.querySelector('#cpu');
+    const buttons = [...document.querySelectorAll('button')];
+    let requestVersion = 0;
+    let busy = false;
+
+    async function api(url, method = 'GET') {
+      const response = await fetch(url, { method });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      return data;
+    }
+
+    async function refresh() {
+      if (busy) return;
+      const version = ++requestVersion;
+      try {
+        const data = await api('/api/' + profile.value);
+        if (version !== requestVersion) return;
+        stress.textContent = data.until * 1000 > Date.now() ? 'On' : 'Off';
+        replicas.textContent = data.ready + ' / ' + data.desired;
+        cpu.textContent = data.cpu === null ? 'Waiting for metrics' : data.cpu + '%';
+        message.textContent = '';
+      } catch (error) {
+        if (version !== requestVersion) return;
+        stress.textContent = replicas.textContent = cpu.textContent = '—';
+        message.textContent = error.message;
+      }
+    }
+
+    async function change(action) {
+      busy = true;
+      requestVersion++;
+      profile.disabled = true;
+      buttons.forEach(button => button.disabled = true);
+      try {
+        await api('/api/' + profile.value + '/' + action, 'POST');
+      } catch (error) {
+        message.textContent = error.message;
+        return;
+      } finally {
+        busy = false;
+        profile.disabled = false;
+        buttons.forEach(button => button.disabled = false);
+      }
+      refresh();
+    }
+
+    profile.addEventListener('change', () => {
+      stress.textContent = replicas.textContent = cpu.textContent = '—';
+      refresh();
+    });
+    buttons.forEach(button => button.addEventListener('click', () => change(button.value)));
+    async function poll() {
+      await refresh();
+      setTimeout(poll, 5000);
+    }
+    poll();
+  </script>
+</body>
+</html>

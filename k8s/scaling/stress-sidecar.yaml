@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stress-target
+spec:
+  # The HPA owns the replica count after the initial workload rollout.
+  replicas: null
+  template:
+    spec:
+      volumes:
+        - name: stress-control
+          configMap:
+            name: stress-control
+      containers:
+        - name: stress
+          image: alpine:3.23
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              apk add --no-cache stress-ng
+              while true; do
+                until_epoch=$(cat /control/until)
+                now=$(date +%s)
+                if [ "$until_epoch" -gt "$now" ]; then
+                  stress-ng --cpu 1 --timeout 5s --quiet
+                else
+                  sleep 2
+                fi
+              done
+          volumeMounts:
+            - name: stress-control
+              mountPath: /control
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 32Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi

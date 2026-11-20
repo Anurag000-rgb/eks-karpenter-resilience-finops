@@ -1,0 +1,15 @@
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: ca2-prod
+spec:
+  role: ca2-resilience-karpenter-node
+  amiSelectorTerms:
+    - alias: al2023@v20261031
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: ca2-resilience
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: ca2-resilience
+  associatePublicIPAddress: true

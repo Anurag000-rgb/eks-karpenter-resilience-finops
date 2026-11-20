@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - workload-dev.yaml
+  - workload-prod.yaml
+  - scaling/resources.yaml
+patches:
+  - path: scaling/stress-sidecar.yaml
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: checkout|dev-service

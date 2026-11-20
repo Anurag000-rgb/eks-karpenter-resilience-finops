@@ -1,0 +1,15 @@
+# Applying this file immediately kills one matching pod.
+# Re-run by deleting this PodChaos object and creating it again.
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: single-pod-kill
+  namespace: ca2-dev
+spec:
+  action: pod-kill
+  mode: one
+  selector:
+    namespaces:
+      - ca2-dev
+    labelSelectors:
+      app: dev-service
