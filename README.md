@@ -15,8 +15,8 @@ export TF_VAR_operator_cidr="$(curl -fsS https://checkip.amazonaws.com)/32"
 export TF_VAR_enable_databases=true
 
 terraform -chdir=infra init
-terraform -chdir=infra plan -out=ca2-full.tfplan
-terraform -chdir=infra show ca2-full.tfplan
+terraform -chdir=infra plan
+terraform -chdir=infra show
 ```
 
 Set `TF_VAR_enable_databases=false` and save as `ca2.tfplan` for a compute-only rehearsal. The full plan includes three billed database instances. The lab uses public IPv4 egress for the workers, a private EKS API endpoint for in-VPC access, and a public EKS API endpoint limited to the workstation CIDR. The database subnets have no internet route.
@@ -26,7 +26,7 @@ Set `TF_VAR_enable_databases=false` and save as `ca2.tfplan` for a compute-only 
 After reviewing the plan and setting the billing alert, apply the chosen plan:
 
 ```sh
-terraform -chdir=infra apply ca2-full.tfplan
+terraform -chdir=infra apply
 aws eks update-kubeconfig --region us-east-1 --name ca2-resilience --alias ca2-resilience
 kubectl --context ca2-resilience get nodes
 ```
