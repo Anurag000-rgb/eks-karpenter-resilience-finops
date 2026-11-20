@@ -1,7 +1,7 @@
 # Resilience Testing
 
 <img width="96" height="96" alt="image" src="https://github.com/user-attachments/assets/56ab783b-f88f-4f27-8492-33fa6b3d3150" />
-https://d3g9o9u8re44ak.cloudfront.net/logo/55cad6f2-84cb-49a7-9d60-265f7e4ea91e/8a67fa7b-85bd-44e4-823c-d7d5690777b1.png
+<img width="96" height="96" alt="image" src="https://d3g9o9u8re44ak.cloudfront.net/logo/55cad6f2-84cb-49a7-9d60-265f7e4ea91e/8a67fa7b-85bd-44e4-823c-d7d5690777b1.png"/>
 
 Terraform provisions the shared EKS cluster and the IAM OIDC provider, Karpenter's AWS roles and node access entry, and the interruption queue. The full plan also includes private Aurora PostgreSQL and RDS PostgreSQL databases. Helm installs the Karpenter controller after EKS is available and annotates its service account with the Terraform-managed controller role for IRSA. Kubernetes manifests define the NodePools and sample services, and Docker Compose runs Prometheus and Grafana locally.
 
